@@ -64,43 +64,67 @@
     </button>
 
     <script>
-      function updateTime() {
-        const now = new Date();
-        const jam = now.getHours().toString().padStart(2, "0");
-        const menit = now.getMinutes().toString().padStart(2, "0");
-        const detik = now.getSeconds().toString().padStart(2, "0");
+  function updateTime() {
+    const now = new Date();
+    const jam = now.getHours().toString().padStart(2, "0");
+    const menit = now.getMinutes().toString().padStart(2, "0");
+    const detik = now.getSeconds().toString().padStart(2, "0");
 
-        document.getElementById(
-          "clock"
-        ).textContent = `${jam}:${menit}:${detik}`;
+    document.getElementById("clock").textContent = `${jam}:${menit}:${detik}`;
 
-        const options = { day: "2-digit", month: "long", year: "numeric" };
-        const tgl = now.toLocaleDateString("id-ID", options);
-        document.getElementById("date").textContent = tgl;
-      }
+    const options = { day: "2-digit", month: "long", year: "numeric" };
+    const tgl = now.toLocaleDateString("id-ID", options);
+    document.getElementById("date").textContent = tgl;
+  }
 
-      setInterval(updateTime, 1000);
-      updateTime();
+  setInterval(updateTime, 1000);
+  updateTime();
 
-      async function goFullscreenLandscape() {
-        const elem = document.documentElement;
+  async function goFullscreenLandscape() {
+    const elem = document.documentElement;
 
-        try {
-          if (!document.fullscreenElement) {
-            await elem.requestFullscreen();
+    try {
+      if (!document.fullscreenElement) {
+        await elem.requestFullscreen();
 
-            // Minta orientasi landscape (kalau bisa, tapi ga usah alert kalau gagal)
-            if (screen.orientation && screen.orientation.lock) {
-              screen.orientation.lock("landscape").catch(() => {});
-            }
-          } else {
-            await document.exitFullscreen();
-          }
-        } catch (err) {
-          // diam aja, ga perlu alert
-          console.warn("Fullscreen gagal:", err);
+        // Minta orientasi landscape (kalau bisa, tapi ga usah alert kalau gagal)
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(() => {});
         }
+      } else {
+        await document.exitFullscreen();
       }
-    </script>
+    } catch (err) {
+      console.warn("Fullscreen gagal:", err);
+    }
+  }
+
+  // ==== Wake Lock Code ====
+  let wakeLock = null;
+
+  async function requestWakeLock() {
+    try {
+      if ("wakeLock" in navigator) {
+        wakeLock = await navigator.wakeLock.request("screen");
+        console.log("Wake Lock aktif!");
+
+        // Jika halaman kembali terlihat, request ulang
+        document.addEventListener("visibilitychange", () => {
+          if (wakeLock !== null && document.visibilityState === "visible") {
+            requestWakeLock();
+          }
+        });
+      } else {
+        console.log("Wake Lock tidak didukung di browser ini.");
+      }
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  }
+
+  // Jalankan saat halaman dibuka
+  requestWakeLock();
+</script>
+
   </body>
 </html>
